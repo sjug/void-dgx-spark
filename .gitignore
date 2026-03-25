@@ -1,0 +1,9 @@
+vm/
+downloads/
+*.qcow2
+*.iso
+*.img
+void-packages/
+recovery-extracted/
+__pycache__/
+*.pyc

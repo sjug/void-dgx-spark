@@ -1,0 +1,16 @@
+# Template file for 'nvidia-spark-grub-pci'
+# 1:1 with Ubuntu package of the same name
+# Adds pci=pcie_bus_safe to kernel cmdline
+pkgname=nvidia-spark-grub-pci
+version=1.0
+revision=1
+short_desc="PCIe bus safe mode for DGX Spark"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+create_wrksrc=yes
+archs="aarch64"
+
+do_install() {
+	vinstall ${FILESDIR}/cmdline-pci.conf 644 usr/share/dgx-spark/cmdline.d
+}

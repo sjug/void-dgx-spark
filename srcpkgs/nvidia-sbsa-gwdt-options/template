@@ -1,0 +1,15 @@
+# Template file for 'nvidia-sbsa-gwdt-options'
+# 1:1 with Ubuntu package of the same name
+pkgname=nvidia-sbsa-gwdt-options
+version=25.06
+revision=1
+short_desc="ARM SBSA Generic Watchdog Timer options for DGX Spark"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+create_wrksrc=yes
+archs="aarch64"
+
+do_install() {
+	vinstall ${FILESDIR}/sbsa_gwdt.conf 644 usr/lib/modprobe.d
+}

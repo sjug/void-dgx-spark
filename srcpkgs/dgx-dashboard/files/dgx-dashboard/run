@@ -1,0 +1,4 @@
+#!/bin/sh
+# DGX Dashboard service
+exec 2>&1
+exec chpst -u _dgxdashboard /usr/bin/dashboard-service -port 11000 serve

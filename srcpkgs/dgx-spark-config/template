@@ -1,0 +1,39 @@
+# Template file for 'dgx-spark-config'
+# Meta-package that pulls in all DGX Spark hardware support packages
+pkgname=dgx-spark-config
+version=1.0
+revision=2
+short_desc="NVIDIA DGX Spark system configuration (meta-package)"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="MIT"
+homepage="https://github.com/<user>/void-dgx-spark"
+create_wrksrc=yes
+
+archs="aarch64"
+
+depends="
+ linux-dgx-spark
+ nvidia-dgx-spark
+ nvidia-dgx-spark-dkms
+ nvidia-dgx-spark-firmware
+ dgx-dashboard
+ nvidia-sbsa-gwdt-options
+ nvidia-cppc-cpufreq-options
+ nvidia-drm-options-modeset0
+ nvidia-spark-realtek-mod-options
+ nvidia-kernel-defaults
+ nvidia-disable-aqc-nic
+ nvidia-disable-init-on-alloc
+ nvidia-disable-numa-balancing
+ nvidia-nvme-options
+ nvidia-earlycon
+ nvidia-spark-initcall-bl
+ nvidia-spark-grub-pci"
+
+do_install() {
+	# Dracut configuration for initramfs (not covered by any Ubuntu package)
+	vinstall ${FILESDIR}/dgx-spark-dracut.conf 644 usr/lib/dracut/dracut.conf.d
+
+	# Module blacklist for nouveau/r8169/coresight (combined from NixOS port)
+	vinstall ${FILESDIR}/dgx-spark-blacklist.conf 644 usr/lib/modprobe.d
+}

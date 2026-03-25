@@ -1,0 +1,15 @@
+# Template file for 'nvidia-drm-options-modeset0'
+# 1:1 with Ubuntu package of the same name
+pkgname=nvidia-drm-options-modeset0
+version=25.07
+revision=1
+short_desc="NVIDIA DRM modeset=0 override for DGX Spark"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+create_wrksrc=yes
+archs="aarch64"
+
+do_install() {
+	vinstall ${FILESDIR}/zz-nvidia-drm-override.conf 644 usr/lib/modprobe.d
+}

@@ -1,0 +1,85 @@
+# Template file for 'dgx-dashboard'
+pkgname=dgx-dashboard
+version=0.23.3
+revision=1
+create_wrksrc=yes
+short_desc="NVIDIA DGX Dashboard - GPU telemetry and system monitoring"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="BSD-3-Clause"
+homepage="https://www.nvidia.com/"
+
+archs="aarch64"
+repository=nonfree
+nostrip=yes
+noverifyrdeps=yes
+
+hostmakedepends="tar xz zstd patchelf"
+depends="pam dbus"
+
+_url="https://repo.download.nvidia.com/baseos/ubuntu/noble/arm64/pool/dgx/d/dgx-dashboard"
+_deb="dgx-dashboard_${version}_arm64.deb"
+_cksum="1c02b4d8f763cdfe4a19fcefaa20417b953dba7c060740037876e980ce4770f5"
+
+system_accounts="_dgxdashboard"
+_dgxdashboard_descr="DGX Dashboard service user"
+
+do_fetch() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	mkdir -p "${_srcdir}"
+	if [ ! -f "${_srcdir}/${_deb}" ]; then
+		xbps-fetch -o "${_srcdir}/${_deb}" "${_url}/${_deb}"
+	fi
+	echo "${_cksum}  ${_srcdir}/${_deb}" | sha256sum -c
+}
+
+do_extract() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	ar x "${_srcdir}/${_deb}"
+	tar xf data.tar.*
+	rm -f control.tar.* data.tar.* debian-binary
+}
+
+do_install() {
+	# Main service binary
+	vbin opt/nvidia/dgx-dashboard-service/dashboard-service
+
+	# Admin binary
+	vbin opt/nvidia/dgx-dashboard/dashboard-admin
+
+	# Reboot helper and port config
+	vmkdir usr/lib/dgx-dashboard
+	install -m755 opt/nvidia/dgx-dashboard/dgx-dashboard-reboot.sh \
+		"${DESTDIR}/usr/lib/dgx-dashboard/"
+	install -m644 opt/nvidia/dgx-dashboard-service/ports.env \
+		"${DESTDIR}/usr/lib/dgx-dashboard/"
+
+	# D-Bus policy
+	vmkdir usr/share/dbus-1/system.d
+	install -m644 etc/dbus-1/system.d/*.conf \
+		"${DESTDIR}/usr/share/dbus-1/system.d/"
+
+	# Runit services
+	vsv dgx-dashboard
+	vsv dgx-dashboard-admin
+
+	# Desktop entry and icon
+	if [ -d usr/share/applications ]; then
+		vmkdir usr/share/applications
+		cp usr/share/applications/*.desktop "${DESTDIR}/usr/share/applications/" 2>/dev/null || true
+	fi
+	if [ -d usr/share/icons ]; then
+		vmkdir usr/share/icons
+		cp -r usr/share/icons/* "${DESTDIR}/usr/share/icons/" 2>/dev/null || true
+	fi
+
+	# Licence
+	if [ -d usr/share/doc/dgx-dashboard ]; then
+		vlicense usr/share/doc/dgx-dashboard/copyright
+	fi
+
+	# Patchelf: fix dynamic linker path for Void Linux
+	patchelf --set-interpreter /usr/lib/ld-linux-aarch64.so.1 \
+		"${DESTDIR}/usr/bin/dashboard-service" 2>/dev/null || true
+	patchelf --set-interpreter /usr/lib/ld-linux-aarch64.so.1 \
+		"${DESTDIR}/usr/bin/dashboard-admin" 2>/dev/null || true
+}

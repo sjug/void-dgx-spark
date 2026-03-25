@@ -1,0 +1,4 @@
+#!/bin/sh
+# NVMe interrupt coalescing — run once at boot
+exec 2>&1
+exec /usr/bin/nvidia-nvme-interrupt-coalescing.sh enable

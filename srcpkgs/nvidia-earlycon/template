@@ -1,0 +1,16 @@
+# Template file for 'nvidia-earlycon'
+# 1:1 with Ubuntu package of the same name
+# Adds earlycon=uart,mmio32,0x16A00000 to kernel cmdline
+pkgname=nvidia-earlycon
+version=25.06
+revision=1
+short_desc="Early console on serial for DGX Spark"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+create_wrksrc=yes
+archs="aarch64"
+
+do_install() {
+	vinstall ${FILESDIR}/cmdline-earlycon.conf 644 usr/share/dgx-spark/cmdline.d
+}

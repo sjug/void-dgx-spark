@@ -1,0 +1,17 @@
+# Template file for 'nvidia-disable-numa-balancing'
+# 1:1 with Ubuntu package of the same name
+# On Ubuntu this is a first-boot systemd service that writes a grub.d config.
+# On Void we set the sysctl directly.
+pkgname=nvidia-disable-numa-balancing
+version=24.10
+revision=1
+short_desc="Disable NUMA balancing for DGX Spark"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+create_wrksrc=yes
+archs="aarch64"
+
+do_install() {
+	vinstall ${FILESDIR}/60-nvidia-numa-balancing.conf 644 usr/lib/sysctl.d
+}

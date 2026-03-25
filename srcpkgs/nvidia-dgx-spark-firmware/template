@@ -1,0 +1,56 @@
+# Template file for 'nvidia-dgx-spark-firmware'
+# NVIDIA GPU firmware for DGX Spark (580.126.09 + 580.142)
+# No distfiles — we handle fetch and extract ourselves since the
+# upstream files are .deb packages that xbps-src can't extract natively.
+pkgname=nvidia-dgx-spark-firmware
+version=580.142
+revision=1
+create_wrksrc=yes
+short_desc="NVIDIA GPU firmware for DGX Spark (580.x)"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+
+archs="aarch64"
+repository=nonfree
+nostrip=yes
+
+hostmakedepends="tar zstd"
+
+_ppa="https://snapshot.ppa.launchpadcontent.net/canonical-nvidia/nvidia-desktop-edge/ubuntu/pool/main/n/nvidia-graphics-drivers-580"
+_ports="http://ports.ubuntu.com/ubuntu-ports/pool/restricted/n/nvidia-graphics-drivers-580"
+_fw142="nvidia-firmware-580-${version}_${version}-0ubuntu0.24.04.1_arm64.deb"
+_fw126="nvidia-firmware-580-580.126.09_580.126.09-0ubuntu0.24.04.2_arm64.deb"
+_ck142="f99849844e414fe698af3af085ee005fa19c1605957eed87c64043dbcc76c237"
+_ck126="4810ee570525a7432e9a86373765f022f79d572228def2a15e22fc15e087d6af"
+
+do_fetch() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	mkdir -p "${_srcdir}"
+
+	if [ ! -f "${_srcdir}/${_fw142}" ]; then
+		msg_normal "Fetching ${_fw142}...\n"
+		xbps-fetch -o "${_srcdir}/${_fw142}" "${_ppa}/${_fw142}"
+	fi
+	echo "${_ck142}  ${_srcdir}/${_fw142}" | sha256sum -c
+
+	if [ ! -f "${_srcdir}/${_fw126}" ]; then
+		msg_normal "Fetching ${_fw126}...\n"
+		xbps-fetch -o "${_srcdir}/${_fw126}" "${_ports}/${_fw126}"
+	fi
+	echo "${_ck126}  ${_srcdir}/${_fw126}" | sha256sum -c
+}
+
+do_extract() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	for f in "${_srcdir}"/*.deb; do
+		ar x "$f"
+		tar xf data.tar.*
+		rm -f control.tar.* data.tar.* debian-binary
+	done
+}
+
+do_install() {
+	vmkdir usr/lib/firmware/nvidia
+	cp -a lib/firmware/nvidia/* ${DESTDIR}/usr/lib/firmware/nvidia/
+}

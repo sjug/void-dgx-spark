@@ -1,0 +1,16 @@
+# Template file for 'nvidia-disable-aqc-nic'
+# 1:1 with Ubuntu package of the same name
+# Removes AQC113 NIC before shutdown to prevent hang
+pkgname=nvidia-disable-aqc-nic
+version=25.06
+revision=1
+short_desc="Remove AQC113 NIC before shutdown on DGX Spark"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+create_wrksrc=yes
+archs="aarch64"
+
+do_install() {
+	vbin ${FILESDIR}/nvidia-disable-aqc-nic.sh
+}

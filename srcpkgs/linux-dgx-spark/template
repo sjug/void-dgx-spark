@@ -1,0 +1,179 @@
+# Template file for 'linux-dgx-spark'
+pkgname=linux-dgx-spark
+version=6.17.1
+revision=1
+_gitrev=47ca203bcc5f4e1580c06fe1074d71497462ac8b
+wrksrc="NV-Kernels-${_gitrev}"
+short_desc="NVIDIA DGX Spark kernel and modules (GB10 SoC, r8127 NIC)"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="GPL-2.0-only"
+homepage="https://github.com/NVIDIA/NV-Kernels"
+distfiles="https://github.com/NVIDIA/NV-Kernels/archive/${_gitrev}.tar.gz"
+checksum=fa6300ade35b12a68a4dbfa08640b0fdfdc0997708874ab404cea44e166f146e
+
+archs="aarch64"
+
+nodebug=yes
+nostrip=yes
+noverifyrdeps=yes
+noshlibprovides=yes
+preserve=yes
+
+hostmakedepends="tar xz bc elfutils-devel flex gmp-devel kmod libmpc-devel
+ pkg-config openssl-devel perl cpio pahole python3 zstd"
+
+_kernver="${version}_${revision}"
+triggers="kernel-hooks"
+kernel_hooks_version="${_kernver}"
+
+mutable_files="
+ /usr/lib/modules/${_kernver}/modules.builtin.bin
+ /usr/lib/modules/${_kernver}/modules.builtin.alias.bin
+ /usr/lib/modules/${_kernver}/modules.softdep
+ /usr/lib/modules/${_kernver}/modules.dep
+ /usr/lib/modules/${_kernver}/modules.dep.bin
+ /usr/lib/modules/${_kernver}/modules.symbols
+ /usr/lib/modules/${_kernver}/modules.symbols.bin
+ /usr/lib/modules/${_kernver}/modules.alias
+ /usr/lib/modules/${_kernver}/modules.alias.bin
+ /usr/lib/modules/${_kernver}/modules.devname"
+
+export KBUILD_BUILD_TIMESTAMP=$(LC_ALL=C date -ud @${SOURCE_DATE_EPOCH:-0})
+export KBUILD_BUILD_USER=voidlinux
+export KBUILD_BUILD_HOST=voidlinux
+
+if [ "$CROSS_BUILD" ]; then
+	_cross="CROSS_COMPILE=${XBPS_CROSS_TRIPLET}-"
+fi
+
+do_configure() {
+	cp -f ${FILESDIR}/arm64-dotconfig .config
+	make ${makejobs} ARCH=arm64 ${_cross} oldconfig
+
+	# Use our revision as LOCALVERSION
+	sed -i -e "s|^\(CONFIG_LOCALVERSION=\).*|\1\"_${revision}\"|" .config
+}
+
+do_build() {
+	export LDFLAGS=
+	make ARCH=arm64 ${_cross} ${makejobs} prepare
+	make ARCH=arm64 ${_cross} ${makejobs} Image modules dtbs
+}
+
+do_install() {
+	local hdrdest
+
+	# Disable depmod.sh — we run depmod ourselves after compressing
+	sed -i '2iexit 0' scripts/depmod.sh
+	vmkdir usr/lib
+	ln -s usr/lib/ ${DESTDIR}
+
+	# Install modules
+	make ${makejobs} ARCH=arm64 INSTALL_MOD_PATH=${DESTDIR} ${_cross} modules_install
+
+	hdrdest=${DESTDIR}/usr/src/kernel-headers-${_kernver}
+
+	# Kernel image, config, System.map
+	vinstall .config 644 boot config-${_kernver}
+	vinstall System.map 644 boot System.map-${_kernver}
+	vinstall arch/arm64/boot/Image 644 boot vmlinux-${_kernver}
+
+	# DTBs
+	make ${makejobs} ARCH=arm64 INSTALL_DTBS_PATH=${DESTDIR}/boot/dtbs/dtbs-${_kernver} ${_cross} dtbs_install
+
+	# Switch to /usr
+	vmkdir usr
+
+	cd ${DESTDIR}/usr/lib/modules/${_kernver}
+	rm -f source build
+	ln -sf ../../../src/kernel-headers-${_kernver} build
+
+	cd ${wrksrc}
+
+	# Install headers for building external modules
+	install -Dm644 Makefile ${hdrdest}/Makefile
+	install -Dm644 Kbuild ${hdrdest}/Kbuild
+	install -Dm644 kernel/Makefile ${hdrdest}/kernel/Makefile
+	install -Dm644 .config ${hdrdest}/.config
+
+	for file in $(find . -name Kconfig\*); do
+		mkdir -p ${hdrdest}/$(dirname $file)
+		install -Dm644 $file ${hdrdest}/${file}
+	done
+
+	for file in $(find arch/arm64 scripts -name module.lds -o -name Kbuild.platforms -o -name Platform); do
+		mkdir -p ${hdrdest}/$(dirname $file)
+		install -Dm644 $file ${hdrdest}/${file}
+	done
+
+	mkdir -p ${hdrdest}/include
+	# Remove firmware — provided by linux-firmware / nvidia-dgx-spark-firmware
+	rm -rf ${DESTDIR}/usr/lib/firmware
+
+	for i in acpi asm-generic clocksource config crypto drm generated linux vdso \
+		math-emu media net pcmcia scsi sound trace uapi video xen dt-bindings; do
+		if [ -d include/$i ]; then
+			cp -a include/$i ${hdrdest}/include
+		fi
+	done
+
+	cd ${wrksrc}
+	mkdir -p ${hdrdest}/arch/arm64
+	cp -a arch/arm64/include ${hdrdest}/arch/arm64
+
+	# Remove host-specific scripts objects when cross-compiling
+	if [ "$CROSS_BUILD" ]; then
+		make ${makejobs} ARCH=arm64 ${_cross} _mrproper_scripts
+		find scripts -name '*.o' -delete
+	fi
+
+	# Files needed for external module builds (nvidia dkms etc.)
+	cp Module.symvers ${hdrdest}
+	cp -a scripts ${hdrdest}
+	mkdir -p ${hdrdest}/security/selinux
+	cp -a security/selinux/include ${hdrdest}/security/selinux
+	mkdir -p ${hdrdest}/tools/include
+	cp -a tools/include/tools ${hdrdest}/tools/include
+	if [ -d "arch/arm64/tools" ]; then
+		cp -a "arch/arm64/tools" "${hdrdest}/arch/arm64"
+	fi
+	cp -a kernel/time/timeconst.bc "${hdrdest}/kernel/time"
+	cp -a kernel/bounds.c "${hdrdest}/kernel"
+
+	mkdir -p ${hdrdest}/arch/arm64/kernel
+	cp arch/arm64/Makefile ${hdrdest}/arch/arm64
+	cp arch/arm64/kernel/asm-offsets.s ${hdrdest}/arch/arm64/kernel
+	cp -a arch/arm64/kernel/vdso ${hdrdest}/arch/arm64/kernel/
+
+	# Add md headers
+	mkdir -p ${hdrdest}/drivers/md
+	cp drivers/md/*.h ${hdrdest}/drivers/md
+
+	# Add wireless headers
+	mkdir -p ${hdrdest}/net/mac80211/
+	cp net/mac80211/*.h ${hdrdest}/net/mac80211
+
+	# Compress modules and run depmod
+	msg_normal "$pkgver: extracting debug info and compressing modules, please wait...\n"
+	install -Dm644 vmlinux ${DESTDIR}/usr/lib/debug/boot/vmlinux-${_kernver}
+	(
+	cd ${DESTDIR}
+	export DESTDIR
+	export SIGN_FILE="${XBPS_WRAPPERDIR}/sign-file sha512 ${wrksrc}/certs/signing_key.pem ${wrksrc}/certs/signing_key.x509"
+	find ./ -name '*.ko' -print0 | \
+		xargs -0r -n1 -P ${XBPS_MAKEJOBS} ${FILESDIR}/mv-debug
+	)
+	depmod -b ${DESTDIR}/usr -F System.map ${_kernver}
+	rm -f ${DESTDIR}/lib
+}
+
+linux-dgx-spark-headers_package() {
+	preserve=yes
+	nostrip=yes
+	noshlibprovides=yes
+	short_desc+=" - source headers for 3rd party modules"
+	pkg_install() {
+		vmove usr/src
+		vmove usr/lib/modules/${_kernver}/build
+	}
+}

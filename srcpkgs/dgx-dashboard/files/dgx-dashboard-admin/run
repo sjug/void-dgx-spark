@@ -1,0 +1,4 @@
+#!/bin/sh
+# DGX Dashboard admin service (runs as root for D-Bus access)
+exec 2>&1
+exec /usr/bin/dashboard-admin
