@@ -4,6 +4,8 @@ downloads/
 *.iso
 *.img
 void-packages/
+void-mklive/
+*.iso
 recovery-extracted/
 __pycache__/
 *.pyc
