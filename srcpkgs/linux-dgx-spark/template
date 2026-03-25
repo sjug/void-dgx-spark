@@ -1,15 +1,15 @@
 # Template file for 'linux-dgx-spark'
 pkgname=linux-dgx-spark
-version=6.17.1
+version=6.17.9
 revision=1
-_gitrev=47ca203bcc5f4e1580c06fe1074d71497462ac8b
+_gitrev=62bdf06f1ccd8916e0aac37c5431e4b397fef963
 wrksrc="NV-Kernels-${_gitrev}"
 short_desc="NVIDIA DGX Spark kernel and modules (GB10 SoC, r8127 NIC)"
 maintainer="Void DGX Spark <void-dgx-spark@example.com>"
 license="GPL-2.0-only"
 homepage="https://github.com/NVIDIA/NV-Kernels"
 distfiles="https://github.com/NVIDIA/NV-Kernels/archive/${_gitrev}.tar.gz"
-checksum=fa6300ade35b12a68a4dbfa08640b0fdfdc0997708874ab404cea44e166f146e
+checksum=90a645e225c3623feeb0dc139941c3b5a9eb49556594efae1ddf820f95cf0a8e
 
 archs="aarch64"
 
