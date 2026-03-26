@@ -12,6 +12,9 @@ configure_args="-DENABLE_VALGRIND=OFF
  -DCMAKE_INSTALL_PERLDIR=/usr/share/perl5/vendor_perl"
 hostmakedepends="pkg-config python3 $(vopt_if docs 'pandoc python3-docutils')"
 makedepends="libnl3-devel eudev-libudev-devel python3-devel"
+# Provider libraries not yet in upstream common/shlibs
+# (PR: void-linux/void-packages#59592)
+shlib_provides="libmlx5.so.1 libmlx4.so.1 libefa.so.1 libmana.so.1 libhns.so.1 libibmad.so.5 libibnetdisc.so.5"
 short_desc="RDMA core userspace libraries and daemons"
 maintainer="Orphaned <orphan@voidlinux.org>"
 license="GPL-2.0-or-later, BSD-2-Clause, MIT"
@@ -45,8 +48,9 @@ pre_configure() {
 }
 
 post_install() {
-	# Remove systemd and sysvinit files
+	# Remove systemd, sysvinit, and systemctl-dependent udev rules
 	rm -rf ${DESTDIR}/usr/lib/systemd ${DESTDIR}/etc/init.d
+	rm -f ${DESTDIR}/usr/lib/udev/rules.d/60-srp_daemon.rules
 
 	# Install dracut module for RDMA
 	vinstall kernel-boot/dracut/50rdma/module-setup.sh 755 \

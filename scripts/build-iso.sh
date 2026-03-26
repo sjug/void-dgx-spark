@@ -75,6 +75,7 @@ EXTRA_PKGS+=" vim git curl tmux ncurses-term uv podman"
 # Services to enable
 SERVICES="sshd dhcpcd nvidia-persistenced"
 SERVICES+=" dgx-dashboard dgx-dashboard-admin"
+SERVICES+=" rdma-ndd"
 
 echo ""
 echo "=== Building DGX Spark Void Linux ISO ==="

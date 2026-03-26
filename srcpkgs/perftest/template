@@ -7,7 +7,7 @@ wrksrc="perftest-${_tag}"
 build_style=gnu-configure
 hostmakedepends="automake libtool pkg-config"
 makedepends="rdma-core-devel pciutils-devel"
-depends="rdma-core"
+depends="rdma-core>=62.0"
 short_desc="InfiniBand/RDMA verbs performance tests"
 maintainer="Void DGX Spark <void-dgx-spark@example.com>"
 license="GPL-2.0-only, BSD-2-Clause"
