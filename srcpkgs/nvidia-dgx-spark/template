@@ -1,9 +1,9 @@
 # Template file for 'nvidia-dgx-spark'
 # NVIDIA 580.142 userspace driver for DGX Spark (aarch64)
-# URLs and checksums verified from sparky 2026-03-24
+# URLs and checksums verified from sparky 2026-03-26
 pkgname=nvidia-dgx-spark
 version=580.142
-revision=1
+revision=2
 _sfx="-0ubuntu0.24.04.1"
 create_wrksrc=yes
 short_desc="NVIDIA 580.142 userspace driver for DGX Spark (GB10)"
@@ -17,34 +17,47 @@ nostrip=yes
 noverifyrdeps=yes
 noshlibprovides=yes
 
-hostmakedepends="tar zstd patchelf"
+hostmakedepends="tar xz zstd patchelf"
 depends="nvidia-dgx-spark-firmware>=${version}"
 
 _ppa="https://snapshot.ppa.launchpadcontent.net/canonical-nvidia/nvidia-desktop-edge/ubuntu/pool/main/n/nvidia-graphics-drivers-580"
+_cuda_repo="https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa"
 
 _debs="
-nvidia-utils-580_${version}${_sfx}_arm64.deb:ec040f9e6fca6e759f5b9202bf2649a768d4cfaa4fa073780f926f08be6728ab
-libnvidia-compute-580_${version}${_sfx}_arm64.deb:c4d57bd41f095d4be16298466776f4ef6f2f13ad1df11ed9b5aacdb1c8ff38cf
-libnvidia-gl-580_${version}${_sfx}_arm64.deb:04acb51342fcda0e420923b763696b92789dfd11866bfc326c42f3d56c2e5c21
-libnvidia-encode-580_${version}${_sfx}_arm64.deb:8e135a15e5f55b5a3bc6a01bb6652fdc47b525c1451c673d289a32b712fbcc21
-libnvidia-decode-580_${version}${_sfx}_arm64.deb:ccf924e3e025726040e31da9d25efca42817a2478a391067090e951b97c586d1
-libnvidia-extra-580_${version}${_sfx}_arm64.deb:156d05cce03c7b8a6e41eb737e89db2857789033ac0a87a17aba5d9fe612647d
-libnvidia-fbc1-580_${version}${_sfx}_arm64.deb:543e649f3c1abc472303f0807d50a0d2fb36ee17f85a7a4bd4b37d2e8f989363
-nvidia-kernel-common-580_${version}${_sfx}_arm64.deb:102752db0c6aa0aa1a669125e972e8e02138b10dd69e5141d4af0ee54f3edb45
+nvidia-utils-580_${version}${_sfx}_arm64.deb:ec040f9e6fca6e759f5b9202bf2649a768d4cfaa4fa073780f926f08be6728ab:${_ppa}
+libnvidia-compute-580_${version}${_sfx}_arm64.deb:c4d57bd41f095d4be16298466776f4ef6f2f13ad1df11ed9b5aacdb1c8ff38cf:${_ppa}
+libnvidia-gl-580_${version}${_sfx}_arm64.deb:04acb51342fcda0e420923b763696b92789dfd11866bfc326c42f3d56c2e5c21:${_ppa}
+libnvidia-encode-580_${version}${_sfx}_arm64.deb:8e135a15e5f55b5a3bc6a01bb6652fdc47b525c1451c673d289a32b712fbcc21:${_ppa}
+libnvidia-decode-580_${version}${_sfx}_arm64.deb:ccf924e3e025726040e31da9d25efca42817a2478a391067090e951b97c586d1:${_ppa}
+libnvidia-extra-580_${version}${_sfx}_arm64.deb:156d05cce03c7b8a6e41eb737e89db2857789033ac0a87a17aba5d9fe612647d:${_ppa}
+libnvidia-fbc1-580_${version}${_sfx}_arm64.deb:543e649f3c1abc472303f0807d50a0d2fb36ee17f85a7a4bd4b37d2e8f989363:${_ppa}
+nvidia-kernel-common-580_${version}${_sfx}_arm64.deb:102752db0c6aa0aa1a669125e972e8e02138b10dd69e5141d4af0ee54f3edb45:${_ppa}
+nvidia-compute-utils-580_${version}${_sfx}_arm64.deb:52cd9afd12e25a998866bf2b4a5664677af5e60b14124f427ba5733458ff4d8a:${_ppa}
 "
+
+# nvidia-modprobe comes from CUDA repo, different version
+_modprobe_deb="nvidia-modprobe_595.58.03-1ubuntu1_arm64.deb"
+_modprobe_sum="edb69ae6c1abac1432fd4d478262c00b162379779eea41c84d10c70555a154bf4faca2fb3814ea688e3d74fd808a6717e06af72890ebffb329b8242fba7ca986"
 
 do_fetch() {
 	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
 	mkdir -p "${_srcdir}"
 	for entry in ${_debs}; do
 		local _file="${entry%%:*}"
-		local _sum="${entry##*:}"
+		local _rest="${entry#*:}"
+		local _sum="${_rest%%:*}"
+		local _url="${_rest#*:}"
 		if [ ! -f "${_srcdir}/${_file}" ]; then
 			msg_normal "Fetching ${_file}...\n"
-			xbps-fetch -o "${_srcdir}/${_file}" "${_ppa}/${_file}"
+			xbps-fetch -o "${_srcdir}/${_file}" "${_url}/${_file}"
 		fi
 		echo "${_sum}  ${_srcdir}/${_file}" | sha256sum -c
 	done
+	# nvidia-modprobe from CUDA repo
+	if [ ! -f "${_srcdir}/${_modprobe_deb}" ]; then
+		msg_normal "Fetching ${_modprobe_deb}...\n"
+		xbps-fetch -o "${_srcdir}/${_modprobe_deb}" "${_cuda_repo}/${_modprobe_deb}"
+	fi
 }
 
 do_extract() {
@@ -61,6 +74,11 @@ do_install() {
 	for bin in usr/bin/*; do
 		[ -f "$bin" ] && vbin "$bin"
 	done
+
+	# nvidia-modprobe has setuid bit (creates /dev/nvidia* device nodes)
+	if [ -f usr/bin/nvidia-modprobe ]; then
+		chmod 4755 ${DESTDIR}/usr/bin/nvidia-modprobe
+	fi
 
 	# Libraries (from aarch64-linux-gnu to usr/lib)
 	vmkdir usr/lib

@@ -183,3 +183,16 @@ linux-dgx-spark-headers_package() {
 		vmove usr/lib/modules/${_kernver}/build
 	}
 }
+
+linux-dgx-spark-dbg_package() {
+	preserve=yes
+	nostrip=yes
+	noverifyrdeps=yes
+	noshlibprovides=yes
+	repository=debug
+	short_desc+=" - debugging symbols"
+	pkg_install() {
+		vmove usr/lib/debug
+		vmove "boot/System.map-${_kernver}"
+	}
+}

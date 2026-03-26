@@ -43,6 +43,14 @@ echo "Indexing local package repos..."
 XBPS_ARCH=aarch64 xbps-rindex -fa "${PACKAGES_DIR}"/*.xbps
 XBPS_ARCH=aarch64 xbps-rindex -fa "${PACKAGES_DIR}"/nonfree/*.xbps
 
+# Bundle our packages as a local repo on the ISO so they're available
+# during installation to NVMe (xbps-install -R /repo ...)
+INCLUDE_DIR=$(mktemp -d)
+mkdir -p "${INCLUDE_DIR}/repo/nonfree"
+cp "${PACKAGES_DIR}"/*.xbps "${PACKAGES_DIR}"/aarch64-repodata "${INCLUDE_DIR}/repo/"
+cp "${PACKAGES_DIR}"/nonfree/*.xbps "${PACKAGES_DIR}"/nonfree/aarch64-repodata "${INCLUDE_DIR}/repo/nonfree/"
+echo "Bundled $(find "${INCLUDE_DIR}/repo" -name '*.xbps' | wc -l) packages for local repo"
+
 cd "${MKLIVE_DIR}"
 
 # DGX Spark kernel command line parameters
@@ -56,13 +64,12 @@ CMDLINE+=" pci=pcie_bus_safe"
 # Packages to include in the live image
 # linux-dgx-spark replaces the default linux kernel (ignored via -g)
 # dgx-spark-config pulls in the full DGX Spark stack
-EXTRA_PKGS="linux-dgx-spark linux-base"
-EXTRA_PKGS+=" dgx-spark-config"
+EXTRA_PKGS="dgx-spark-config"
 EXTRA_PKGS+=" nvidia-dgx-spark-modules"
-EXTRA_PKGS+=" cryptsetup rpcbind"
+EXTRA_PKGS+=" cryptsetup rpcbind nftables iptables-nft"
 EXTRA_PKGS+=" ethtool rdma-core iperf3"
 EXTRA_PKGS+=" pciutils usbutils lshw htop"
-EXTRA_PKGS+=" vim git curl"
+EXTRA_PKGS+=" vim git curl uv podman"
 
 # Services to enable
 SERVICES="sshd dhcpcd nvidia-persistenced"
@@ -77,14 +84,32 @@ echo "Services: ${SERVICES}"
 echo "Cmdline:  ${CMDLINE}"
 echo ""
 
+# Workaround: mklive uses 'mount --rbind /$f' which pulls in sub-mounts like
+# cgroup2, efivarfs, binfmt_misc from the host. These can't be unmounted since
+# the host systemd owns them, causing mklive to fail at the squashfs step.
+# Fix: use --bind (no sub-mounts) instead of --rbind.
+sed -i 's/mount --rbind/mount --bind/' mklive.sh
+
+# Workaround: mklive's -v flag only accepts linux<version> or linux-<series>.
+# Add linux-dgx-spark to the case statement so it's treated as a custom kernel.
+sed -i '/linux-asahi)/i\
+    linux-dgx-spark)\
+        IGNORE_PKGS+=(linux)\
+        PACKAGE_LIST+=(linux-dgx-spark linux-base)\
+        ;;' mklive.sh
+
 # Use -g to ignore the default 'linux' metapackage (we provide linux-dgx-spark)
+# -K keeps builddir on failure for debugging
 # Local repos listed first so our packages take priority
 ./mklive.sh \
     -a aarch64 \
+    -K \
+    -I "${INCLUDE_DIR}" \
     -r "${PACKAGES_DIR}" \
     -r "${PACKAGES_DIR}/nonfree" \
     -r "https://repo-default.voidlinux.org/current/aarch64" \
     -r "https://repo-default.voidlinux.org/current/aarch64/nonfree" \
+    -v linux-dgx-spark \
     -g "linux linux-headers" \
     -p "${EXTRA_PKGS}" \
     -S "${SERVICES}" \

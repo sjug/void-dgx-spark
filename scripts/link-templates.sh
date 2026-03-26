@@ -42,11 +42,13 @@ for pkg in "${PROJECT_DIR}"/srcpkgs/*/; do
     fi
 done
 
-# Create subpackage symlink for kernel headers
+# Create subpackage symlinks for kernel headers and debug
 cd "${VOID_PACKAGES}/srcpkgs"
-rm -rf linux-dgx-spark-headers
-ln -sf linux-dgx-spark linux-dgx-spark-headers
-echo "  LINK: linux-dgx-spark-headers -> linux-dgx-spark"
+for sub in linux-dgx-spark-headers linux-dgx-spark-dbg; do
+    rm -rf "$sub"
+    ln -sf linux-dgx-spark "$sub"
+    echo "  LINK: $sub -> linux-dgx-spark"
+done
 
 echo ""
 echo "Done. Build with:"
