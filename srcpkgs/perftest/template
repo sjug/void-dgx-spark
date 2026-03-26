@@ -1,0 +1,22 @@
+# Template file for 'perftest'
+pkgname=perftest
+version=25.10.0.0.128
+revision=1
+_tag="25.10.0-0.128"
+wrksrc="perftest-${_tag}"
+build_style=gnu-configure
+hostmakedepends="automake libtool pkg-config"
+makedepends="rdma-core-devel pciutils-devel"
+depends="rdma-core"
+# libmlx5.so.1 is provided by rdma-core but not registered in upstream common/shlibs
+allow_unknown_shlibs=yes
+short_desc="InfiniBand/RDMA verbs performance tests"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="GPL-2.0-only, BSD-2-Clause"
+homepage="https://github.com/linux-rdma/perftest"
+distfiles="https://github.com/linux-rdma/perftest/archive/refs/tags/${_tag}.tar.gz"
+checksum=5b05c9e1a82c285dd4f41e111a049d3440e0a4a90c14511fc67d9716800d1b5f
+
+pre_configure() {
+	./autogen.sh
+}

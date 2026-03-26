@@ -68,9 +68,9 @@ CMDLINE+=" pci=pcie_bus_safe"
 EXTRA_PKGS="dgx-spark-config"
 EXTRA_PKGS+=" nvidia-dgx-spark-modules"
 EXTRA_PKGS+=" cryptsetup rpcbind nftables iptables-nft wireless-regdb"
-EXTRA_PKGS+=" ethtool rdma-core iperf3"
-EXTRA_PKGS+=" pciutils usbutils lshw htop"
-EXTRA_PKGS+=" vim git curl tmux uv podman"
+EXTRA_PKGS+=" ethtool rdma-core iperf3 perftest"
+EXTRA_PKGS+=" pciutils usbutils lshw btop"
+EXTRA_PKGS+=" vim git curl tmux ncurses-term uv podman"
 
 # Services to enable
 SERVICES="sshd dhcpcd nvidia-persistenced"

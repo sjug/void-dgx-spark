@@ -36,4 +36,13 @@ do_install() {
 
 	# Module blacklist for nouveau/r8169/coresight (combined from NixOS port)
 	vinstall ${FILESDIR}/dgx-spark-blacklist.conf 644 usr/lib/modprobe.d
+
+	# Resource limits for RDMA and NVIDIA (nofile + memlock)
+	# From nv-limits 25.10-1 on DGX OS
+	vinstall ${FILESDIR}/nv-limits.conf 644 etc/security/limits.d
+
+	# Auto-load RDMA upper-layer modules at boot
+	# On Ubuntu, systemd rdma-load-modules@rdma.service reads /etc/rdma/modules/rdma.conf
+	# On Void with runit, we use modules-load.d instead
+	vinstall ${FILESDIR}/rdma-modules.conf 644 usr/lib/modules-load.d
 }
