@@ -1,0 +1,60 @@
+# Template file for 'nvidia-mlnx-tools'
+# Network QoS, performance tuning, and BlueField config scripts
+pkgname=nvidia-mlnx-tools
+version=23.04
+revision=1
+create_wrksrc=yes
+short_desc="NVIDIA Mellanox network tools and scripts"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+
+archs="aarch64"
+nostrip=yes
+noverifyrdeps=yes
+python_version=3
+
+hostmakedepends="tar xz zstd"
+depends="python3 rdma-core"
+
+_url="https://repo.download.nvidia.com/baseos/ubuntu/noble/arm64/pool/common/n/nvidia-mlnx-tools"
+_deb="nvidia-mlnx-tools_${version}_all.deb"
+_cksum="728ab9a4d1594ac63cfacd24d245b1794ef9655110ea2dd304cb6b8092a693db"
+
+do_fetch() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	mkdir -p "${_srcdir}"
+	if [ ! -f "${_srcdir}/${_deb}" ]; then
+		xbps-fetch -o "${_srcdir}/${_deb}" "${_url}/${_deb}"
+	fi
+	echo "${_cksum}  ${_srcdir}/${_deb}" | sha256sum -c
+}
+
+do_extract() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	ar x "${_srcdir}/${_deb}"
+	tar xf data.tar.*
+	rm -f control.tar.* data.tar.* debian-binary
+}
+
+do_install() {
+	# Binaries and scripts
+	for bin in usr/bin/*; do
+		[ -f "$bin" ] && vbin "$bin"
+	done
+	for sbin in sbin/*; do
+		[ -f "$sbin" ] && vbin "$sbin"
+	done
+
+	# udev helper
+	if [ -f lib/udev/mlnx_bf_udev ]; then
+		vinstall lib/udev/mlnx_bf_udev 755 usr/lib/udev
+	fi
+
+	# Python modules — move from Debian dist-packages to Void site-packages
+	if [ -d usr/lib/python3/dist-packages ]; then
+		vmkdir ${py3_sitelib}
+		cp -a usr/lib/python3/dist-packages/* \
+			${DESTDIR}/${py3_sitelib}/
+	fi
+}

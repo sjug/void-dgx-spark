@@ -1,0 +1,43 @@
+# Template file for 'mlnx-pxe-setup'
+# PXE boot configuration for Mellanox NICs
+pkgname=mlnx-pxe-setup
+version=25.05
+revision=1
+create_wrksrc=yes
+short_desc="PXE boot configuration for Mellanox NICs"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+
+archs="aarch64"
+nostrip=yes
+
+hostmakedepends="tar xz zstd"
+depends="mstflint"
+
+_url="https://repo.download.nvidia.com/baseos/ubuntu/noble/arm64/pool/common/m/mlnx-pxe-setup"
+_deb="mlnx-pxe-setup_${version}-1_all.deb"
+_cksum="7c420599cc4cae029addb753abb2668f9e159cf5d1b013db30eb837aab4e0064"
+
+do_fetch() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	mkdir -p "${_srcdir}"
+	if [ ! -f "${_srcdir}/${_deb}" ]; then
+		xbps-fetch -o "${_srcdir}/${_deb}" "${_url}/${_deb}"
+	fi
+	echo "${_cksum}  ${_srcdir}/${_deb}" | sha256sum -c
+}
+
+do_extract() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	ar x "${_srcdir}/${_deb}"
+	tar xf data.tar.*
+	rm -f control.tar.* data.tar.* debian-binary
+}
+
+do_install() {
+	# PXE setup script — fix path for Void (no /usr/sbin)
+	if [ -f usr/sbin/mlnx_pxe_setup.bash ]; then
+		vbin usr/sbin/mlnx_pxe_setup.bash
+	fi
+}

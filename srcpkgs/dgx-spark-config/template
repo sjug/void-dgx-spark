@@ -28,7 +28,12 @@ depends="
  nvidia-nvme-options
  nvidia-earlycon
  nvidia-spark-initcall-bl
- nvidia-spark-grub-pci"
+ nvidia-spark-grub-pci
+ mstflint
+ nvidia-mlnx-tools
+ dgx-spark-mlnx-hotplug
+ nvidia-spark-mlnx-firmware-manager
+ mlnx-pxe-setup"
 
 do_install() {
 	# Dracut configuration for initramfs (not covered by any Ubuntu package)

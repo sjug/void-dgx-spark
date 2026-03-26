@@ -1,0 +1,53 @@
+# Template file for 'dgx-spark-mlnx-hotplug'
+# CX7 PCIe hot-plug support for DGX Spark
+pkgname=dgx-spark-mlnx-hotplug
+version=26.01
+revision=1
+create_wrksrc=yes
+short_desc="ConnectX-7 PCIe hot-plug support for DGX Spark"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+
+archs="aarch64"
+nostrip=yes
+
+hostmakedepends="tar xz zstd"
+
+_url="https://repo.download.nvidia.com/baseos/ubuntu/noble/arm64/pool/dgx/d/dgx-spark-mlnx-hotplug"
+_deb="dgx-spark-mlnx-hotplug_${version}-1_all.deb"
+_cksum="2db1e87ba2d2e7a3dabf21d46ced3b37e9d38fda518438005805dbe04dfdcc01"
+
+do_fetch() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	mkdir -p "${_srcdir}"
+	if [ ! -f "${_srcdir}/${_deb}" ]; then
+		xbps-fetch -o "${_srcdir}/${_deb}" "${_url}/${_deb}"
+	fi
+	echo "${_cksum}  ${_srcdir}/${_deb}" | sha256sum -c
+}
+
+do_extract() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	ar x "${_srcdir}/${_deb}"
+	tar xf data.tar.*
+	rm -f control.tar.* data.tar.* debian-binary
+}
+
+do_install() {
+	# udev rule for CX7 hotplug
+	if [ -f lib/udev/rules.d/90-mtk-hotplug.rules ]; then
+		vinstall lib/udev/rules.d/90-mtk-hotplug.rules 644 usr/lib/udev/rules.d
+	fi
+
+	# Hotplug handler script
+	if [ -d opt/nvidia/dgx-spark-mlnx-hotplug ]; then
+		vmkdir usr/lib/dgx-spark-mlnx-hotplug
+		install -m755 opt/nvidia/dgx-spark-mlnx-hotplug/*.sh \
+			${DESTDIR}/usr/lib/dgx-spark-mlnx-hotplug/
+	fi
+
+	# Fix path in udev rule to match Void location
+	sed -i 's|/opt/nvidia/dgx-spark-mlnx-hotplug|/usr/lib/dgx-spark-mlnx-hotplug|g' \
+		${DESTDIR}/usr/lib/udev/rules.d/90-mtk-hotplug.rules
+}

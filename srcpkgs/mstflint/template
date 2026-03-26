@@ -1,0 +1,24 @@
+# Template file for 'mstflint'
+pkgname=mstflint
+version=4.35.0.1
+revision=1
+_tag="v4.35.0-1"
+wrksrc="mstflint-4.35.0-1"
+build_style=gnu-configure
+disable_parallel_build=yes
+configure_args="--enable-openssl --enable-cs --enable-dc
+ --enable-inband --enable-fw-mgr"
+hostmakedepends="automake libtool pkg-config"
+makedepends="rdma-core-devel zlib-devel libxml2-devel openssl-devel
+ libcurl-devel liblzma-devel expat-devel json-c-devel iniparser-devel"
+depends="python3 rdma-core"
+short_desc="Mellanox firmware burning and diagnostic tools"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="GPL-2.0-only, BSD-2-Clause"
+homepage="https://github.com/Mellanox/mstflint"
+distfiles="https://github.com/Mellanox/mstflint/archive/refs/tags/${_tag}.tar.gz"
+checksum=5088e35035490abc875f84337a01991aa5c6d11c3910cde49bc5c435b156f852
+
+pre_configure() {
+	./autogen.sh
+}

@@ -1,0 +1,60 @@
+# Template file for 'nvidia-spark-mlnx-firmware-manager'
+# ConnectX-7 firmware management for DGX Spark
+pkgname=nvidia-spark-mlnx-firmware-manager
+version=5.0.8
+revision=1
+create_wrksrc=yes
+short_desc="NVIDIA DGX Spark ConnectX-7 firmware manager"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+
+archs="aarch64"
+repository=nonfree
+nostrip=yes
+noverifyrdeps=yes
+
+hostmakedepends="tar xz zstd patchelf"
+depends="mstflint"
+
+_url="https://repo.download.nvidia.com/baseos/ubuntu/noble/arm64/pool/dgx/n/nvidia-spark-mlnx-firmware-manager"
+_deb="nvidia-spark-mlnx-firmware-manager_${version}-1_arm64.deb"
+_cksum="8d18daf0b40b5209aede72e4c57c16f7f45479fc2daa98efb876791b989df1fa"
+
+do_fetch() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	mkdir -p "${_srcdir}"
+	if [ ! -f "${_srcdir}/${_deb}" ]; then
+		xbps-fetch -o "${_srcdir}/${_deb}" "${_url}/${_deb}"
+	fi
+	echo "${_cksum}  ${_srcdir}/${_deb}" | sha256sum -c
+}
+
+do_extract() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	ar x "${_srcdir}/${_deb}"
+	tar xf data.tar.*
+	rm -f control.tar.* data.tar.* debian-binary
+}
+
+do_install() {
+	# Firmware manager script and firmware binary
+	vmkdir usr/lib/spark-mlnx-firmware-manager
+	if [ -d opt/nvidia/spark-mlnx-firmware-manager ]; then
+		cp -a opt/nvidia/spark-mlnx-firmware-manager/* \
+			${DESTDIR}/usr/lib/spark-mlnx-firmware-manager/
+	fi
+
+	# Fix interpreter for Void
+	find ${DESTDIR}/usr/lib/spark-mlnx-firmware-manager -type f -executable | while read f; do
+		patchelf --set-interpreter /usr/lib/ld-linux-aarch64.so.1 "$f" 2>/dev/null || true
+	done
+
+	# Wrapper script in PATH
+	vmkdir usr/bin
+	cat > ${DESTDIR}/usr/bin/nvidia-spark-mlnx-firmware-manager <<'EOF'
+#!/bin/sh
+exec /usr/lib/spark-mlnx-firmware-manager/nvidia-spark-mlnx-firmware-manager "$@"
+EOF
+	chmod 755 ${DESTDIR}/usr/bin/nvidia-spark-mlnx-firmware-manager
+}
