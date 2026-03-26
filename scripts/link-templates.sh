@@ -3,6 +3,9 @@
 # Templates are copied (not symlinked) because xbps-src chroot can't follow
 # symlinks pointing outside the masterdir.
 #
+# Also cleans xbps-src build state for any package whose template changed,
+# so you don't have to manually delete _done markers.
+#
 # Usage: ./link-templates.sh [void-packages-dir]
 set -euo pipefail
 
@@ -20,9 +23,23 @@ echo "Copying DGX Spark templates into ${VOID_PACKAGES}/srcpkgs/"
 
 for pkg in "${PROJECT_DIR}"/srcpkgs/*/; do
     pkg_name=$(basename "${pkg}")
-    rm -rf "${VOID_PACKAGES}/srcpkgs/${pkg_name}"
-    cp -a "${pkg}" "${VOID_PACKAGES}/srcpkgs/${pkg_name}"
-    echo "  COPY: ${pkg_name}"
+    target="${VOID_PACKAGES}/srcpkgs/${pkg_name}"
+
+    # Check if template changed
+    if [ -f "${target}/template" ] && diff -q "${pkg}/template" "${target}/template" >/dev/null 2>&1; then
+        echo "  SKIP: ${pkg_name} (unchanged)"
+    else
+        rm -rf "${target}"
+        cp -a "${pkg}" "${target}"
+        echo "  COPY: ${pkg_name}"
+
+        # Clean build state so xbps-src picks up the new template
+        local_builddir="${VOID_PACKAGES}/masterdir-x86_64/builddir/.xbps-${pkg_name}"
+        if [ -d "${local_builddir}" ]; then
+            rm -f "${local_builddir}"/*_done
+            echo "        (cleaned build state)"
+        fi
+    fi
 done
 
 # Create subpackage symlink for kernel headers

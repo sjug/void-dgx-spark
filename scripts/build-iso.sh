@@ -8,7 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="${SCRIPT_DIR}/.."
 MKLIVE_DIR="${PROJECT_DIR}/void-mklive"
-PACKAGES_DIR="${PROJECT_DIR}/void-packages/hostdir/binpkgs"
+PACKAGES_DIR="$(realpath "${PROJECT_DIR}/void-packages/hostdir/binpkgs")"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo "ERROR: must run as root (mklive creates filesystems)"
@@ -40,8 +40,8 @@ fi
 
 # Ensure repos are indexed
 echo "Indexing local package repos..."
-XBPS_ARCH=aarch64 xbps-rindex -fa "${PACKAGES_DIR}"/*.xbps 2>/dev/null
-XBPS_ARCH=aarch64 xbps-rindex -fa "${PACKAGES_DIR}"/nonfree/*.xbps 2>/dev/null
+XBPS_ARCH=aarch64 xbps-rindex -fa "${PACKAGES_DIR}"/*.xbps
+XBPS_ARCH=aarch64 xbps-rindex -fa "${PACKAGES_DIR}"/nonfree/*.xbps
 
 cd "${MKLIVE_DIR}"
 
@@ -53,12 +53,16 @@ CMDLINE+=" init_on_alloc=0"
 CMDLINE+=" initcall_blacklist=tegra234_cbb_init"
 CMDLINE+=" pci=pcie_bus_safe"
 
-# Additional packages to include in the live image
-EXTRA_PKGS="dgx-spark-config"
-EXTRA_PKGS+=" nvidia-dgx-spark-dkms"
+# Packages to include in the live image
+# linux-dgx-spark replaces the default linux kernel (ignored via -g)
+# dgx-spark-config pulls in the full DGX Spark stack
+EXTRA_PKGS="linux-dgx-spark linux-base"
+EXTRA_PKGS+=" dgx-spark-config"
+EXTRA_PKGS+=" nvidia-dgx-spark-modules"
+EXTRA_PKGS+=" cryptsetup rpcbind"
 EXTRA_PKGS+=" ethtool rdma-core iperf3"
 EXTRA_PKGS+=" pciutils usbutils lshw htop"
-EXTRA_PKGS+=" vim git wget curl"
+EXTRA_PKGS+=" vim git curl"
 
 # Services to enable
 SERVICES="sshd dhcpcd nvidia-persistenced"
@@ -73,13 +77,15 @@ echo "Services: ${SERVICES}"
 echo "Cmdline:  ${CMDLINE}"
 echo ""
 
+# Use -g to ignore the default 'linux' metapackage (we provide linux-dgx-spark)
+# Local repos listed first so our packages take priority
 ./mklive.sh \
     -a aarch64 \
-    -r "file://${PACKAGES_DIR}" \
-    -r "file://${PACKAGES_DIR}/nonfree" \
+    -r "${PACKAGES_DIR}" \
+    -r "${PACKAGES_DIR}/nonfree" \
     -r "https://repo-default.voidlinux.org/current/aarch64" \
     -r "https://repo-default.voidlinux.org/current/aarch64/nonfree" \
-    -v linux-dgx-spark \
+    -g "linux linux-headers" \
     -p "${EXTRA_PKGS}" \
     -S "${SERVICES}" \
     -C "${CMDLINE}" \

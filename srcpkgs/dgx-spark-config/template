@@ -14,7 +14,7 @@ archs="aarch64"
 depends="
  linux-dgx-spark
  nvidia-dgx-spark
- nvidia-dgx-spark-dkms
+ nvidia-dgx-spark-modules
  nvidia-dgx-spark-firmware
  dgx-dashboard
  nvidia-sbsa-gwdt-options

@@ -9,3 +9,4 @@ void-mklive/
 recovery-extracted/
 __pycache__/
 *.pyc
+*.log

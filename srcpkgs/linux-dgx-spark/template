@@ -48,7 +48,7 @@ fi
 
 do_configure() {
 	cp -f ${FILESDIR}/arm64-dotconfig .config
-	make ${makejobs} ARCH=arm64 ${_cross} oldconfig
+	make ${makejobs} ARCH=arm64 ${_cross} olddefconfig
 
 	# Use our revision as LOCALVERSION
 	sed -i -e "s|^\(CONFIG_LOCALVERSION=\).*|\1\"_${revision}\"|" .config
@@ -111,7 +111,7 @@ do_install() {
 	rm -rf ${DESTDIR}/usr/lib/firmware
 
 	for i in acpi asm-generic clocksource config crypto drm generated linux vdso \
-		math-emu media net pcmcia scsi sound trace uapi video xen dt-bindings; do
+		math-emu media net pcmcia scsi soc sound trace uapi video xen dt-bindings; do
 		if [ -d include/$i ]; then
 			cp -a include/$i ${hdrdest}/include
 		fi
@@ -121,13 +121,17 @@ do_install() {
 	mkdir -p ${hdrdest}/arch/arm64
 	cp -a arch/arm64/include ${hdrdest}/arch/arm64
 
-	# Remove host-specific scripts objects when cross-compiling
+	# For cross-builds: clean target-arch script binaries, then rebuild.
+	# 'prepare0' builds scripts/mod (modpost, file2alias) and basic host tools.
+	# It needs CROSS_COMPILE for the target .o files but builds host tools with HOSTCC.
+	# This is the same target Void's DKMS trigger uses to prepare kernel headers.
 	if [ "$CROSS_BUILD" ]; then
 		make ${makejobs} ARCH=arm64 ${_cross} _mrproper_scripts
 		find scripts -name '*.o' -delete
+		make ${makejobs} ARCH=arm64 ${_cross} prepare0
 	fi
 
-	# Files needed for external module builds (nvidia dkms etc.)
+	# Files needed for external module builds (nvidia etc.)
 	cp Module.symvers ${hdrdest}
 	cp -a scripts ${hdrdest}
 	mkdir -p ${hdrdest}/security/selinux
@@ -165,6 +169,8 @@ do_install() {
 	)
 	depmod -b ${DESTDIR}/usr -F System.map ${_kernver}
 	rm -f ${DESTDIR}/lib
+	# Clean up any cross-prefix dirs that confuse xbps-src hooks
+	rm -rf ${DESTDIR}/usr/aarch64-linux-gnu
 }
 
 linux-dgx-spark-headers_package() {
