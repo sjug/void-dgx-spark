@@ -8,8 +8,6 @@ build_style=gnu-configure
 hostmakedepends="automake libtool pkg-config"
 makedepends="rdma-core-devel pciutils-devel"
 depends="rdma-core"
-# libmlx5.so.1 is provided by rdma-core but not registered in upstream common/shlibs
-allow_unknown_shlibs=yes
 short_desc="InfiniBand/RDMA verbs performance tests"
 maintainer="Void DGX Spark <void-dgx-spark@example.com>"
 license="GPL-2.0-only, BSD-2-Clause"

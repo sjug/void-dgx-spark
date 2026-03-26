@@ -1,0 +1,87 @@
+# Template file for 'rdma-core'
+# Bumped from 44.0 to 62.0 for DGX Spark RDMA support
+pkgname=rdma-core
+version=62.0
+revision=1
+build_style=cmake
+configure_args="-DENABLE_VALGRIND=OFF
+ -DCMAKE_INSTALL_MODPROBEDIR=/usr/lib/modprobe.d
+ -DCMAKE_INSTALL_SBINDIR=/usr/bin
+ -DCMAKE_INSTALL_LIBEXECDIR=/usr/lib/rdma
+ -DCMAKE_INSTALL_RUNDIR=/run
+ -DCMAKE_INSTALL_PERLDIR=/usr/share/perl5/vendor_perl"
+hostmakedepends="pkg-config python3 $(vopt_if docs 'pandoc python3-docutils')"
+makedepends="libnl3-devel eudev-libudev-devel python3-devel"
+short_desc="RDMA core userspace libraries and daemons"
+maintainer="Orphaned <orphan@voidlinux.org>"
+license="GPL-2.0-or-later, BSD-2-Clause, MIT"
+homepage="https://github.com/linux-rdma/rdma-core"
+distfiles="https://github.com/linux-rdma/rdma-core/releases/download/v${version}/rdma-core-${version}.tar.gz"
+checksum=c00ad60e614162ba4d731db941d4d653bb426938d8d33ef1a11f204cbc5302a0
+build_options="docs"
+desc_option_docs="Enable documentation"
+
+conf_files="/etc/iwpmd.conf
+ /etc/srp_daemon.conf
+ /etc/rdma/modules/infiniband.conf
+ /etc/rdma/modules/iwarp.conf
+ /etc/rdma/modules/iwpmd.conf
+ /etc/rdma/modules/opa.conf
+ /etc/rdma/modules/rdma.conf
+ /etc/rdma/modules/roce.conf
+ /etc/rdma/modules/srp_daemon.conf"
+
+case "$XBPS_MACHINE" in
+	x86_64*|i686*|ppc64le*|ppc64) build_options_default="docs" ;;
+esac
+
+pre_configure() {
+	# Fix paths for Void (no /usr/sbin, /usr/libexec, or /sbin)
+	find kernel-boot/dracut redhat -type f -exec sed -i \
+		-e 's|/usr/libexec|/usr/lib/rdma|g' \
+		-e 's|/usr/sbin|/usr/bin|g' \
+		-e 's|/sbin|/usr/bin|g' \
+		'{}' '+'
+}
+
+post_install() {
+	# Remove systemd and sysvinit files
+	rm -rf ${DESTDIR}/usr/lib/systemd ${DESTDIR}/etc/init.d
+
+	# Install dracut module for RDMA
+	vinstall kernel-boot/dracut/50rdma/module-setup.sh 755 \
+		usr/lib/dracut/modules.d/50rdma
+
+	# Boot-time RDMA module loading (replaces systemd rdma-load-modules@.service)
+	# Reads /etc/rdma/modules/*.conf at boot, same config files as systemd
+	vinstall ${FILESDIR}/09-rdma.sh 644 etc/runit/core-services
+
+	# RDMA Node Description Daemon (replaces systemd rdma-ndd.service)
+	vsv rdma-ndd
+
+	vlicense COPYING.BSD_FB
+	vlicense COPYING.BSD_MIT
+}
+
+rdma-core-devel_package() {
+	depends="rdma-core-${version}_${revision}"
+	short_desc+=" - development files"
+	pkg_install() {
+		vmove usr/include
+		vmove usr/lib/pkgconfig
+		vmove usr/share/man/man3
+		vmove "usr/lib/*.so"
+	}
+}
+
+libibmad_package() {
+	depends="rdma-core>=${version}_${revision}"
+	short_desc+=" (transitional dummy package)"
+	metapackage=yes
+}
+
+libibmad-devel_package() {
+	depends="rdma-core-devel>=${version}_${revision}"
+	short_desc+=" - development files (transitional dummy package)"
+	metapackage=yes
+}

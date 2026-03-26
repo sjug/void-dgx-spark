@@ -50,6 +50,15 @@ for sub in linux-dgx-spark-headers linux-dgx-spark-dbg; do
     echo "  LINK: $sub -> linux-dgx-spark"
 done
 
+# Patch common/shlibs for missing rdma-core provider libraries
+# (PR submitted upstream: void-linux/void-packages#59592)
+for _lib in libmlx5.so.1 libmlx4.so.1 libefa.so.1 libmana.so.1 libhns.so.1 libibmad.so.5 libibnetdisc.so.5; do
+    if ! grep -q "^${_lib} " "${VOID_PACKAGES}/common/shlibs"; then
+        echo "${_lib} rdma-core-22.1_1" >> "${VOID_PACKAGES}/common/shlibs"
+        echo "  PATCH: added ${_lib} to common/shlibs"
+    fi
+done
+
 echo ""
 echo "Done. Build with:"
 echo "  cd ${VOID_PACKAGES}"

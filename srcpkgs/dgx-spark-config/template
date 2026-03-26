@@ -41,8 +41,5 @@ do_install() {
 	# From nv-limits 25.10-1 on DGX OS
 	vinstall ${FILESDIR}/nv-limits.conf 644 etc/security/limits.d
 
-	# Auto-load RDMA upper-layer modules at boot
-	# On Ubuntu, systemd rdma-load-modules@rdma.service reads /etc/rdma/modules/rdma.conf
-	# On Void with runit, we use modules-load.d instead
-	vinstall ${FILESDIR}/rdma-modules.conf 644 usr/lib/modules-load.d
+	# RDMA module loading is handled by rdma-core's 09-rdma.sh core-service
 }
