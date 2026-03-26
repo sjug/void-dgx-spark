@@ -58,6 +58,7 @@ cd "${MKLIVE_DIR}"
 CMDLINE="console=tty0 console=ttyS0,921600"
 CMDLINE+=" earlycon=uart,mmio32,0x16A00000"
 CMDLINE+=" init_on_alloc=0"
+CMDLINE+=" iommu.passthrough=0"
 CMDLINE+=" initcall_blacklist=tegra234_cbb_init"
 CMDLINE+=" pci=pcie_bus_safe"
 
@@ -66,10 +67,10 @@ CMDLINE+=" pci=pcie_bus_safe"
 # dgx-spark-config pulls in the full DGX Spark stack
 EXTRA_PKGS="dgx-spark-config"
 EXTRA_PKGS+=" nvidia-dgx-spark-modules"
-EXTRA_PKGS+=" cryptsetup rpcbind nftables iptables-nft"
+EXTRA_PKGS+=" cryptsetup rpcbind nftables iptables-nft wireless-regdb"
 EXTRA_PKGS+=" ethtool rdma-core iperf3"
 EXTRA_PKGS+=" pciutils usbutils lshw htop"
-EXTRA_PKGS+=" vim git curl uv podman"
+EXTRA_PKGS+=" vim git curl tmux uv podman"
 
 # Services to enable
 SERVICES="sshd dhcpcd nvidia-persistenced"
@@ -105,6 +106,7 @@ sed -i '/linux-asahi)/i\
     -a aarch64 \
     -K \
     -I "${INCLUDE_DIR}" \
+    -x "${PROJECT_DIR}/scripts/iso-postsetup.sh" \
     -r "${PACKAGES_DIR}" \
     -r "${PACKAGES_DIR}/nonfree" \
     -r "https://repo-default.voidlinux.org/current/aarch64" \

@@ -25,8 +25,8 @@ for pkg in "${PROJECT_DIR}"/srcpkgs/*/; do
     pkg_name=$(basename "${pkg}")
     target="${VOID_PACKAGES}/srcpkgs/${pkg_name}"
 
-    # Check if template changed
-    if [ -f "${target}/template" ] && diff -q "${pkg}/template" "${target}/template" >/dev/null 2>&1; then
+    # Check if anything changed (template, files/, patches/, etc.)
+    if [ -d "${target}" ] && diff -rq "${pkg}" "${target}" >/dev/null 2>&1; then
         echo "  SKIP: ${pkg_name} (unchanged)"
     else
         rm -rf "${target}"

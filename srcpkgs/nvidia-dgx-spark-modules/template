@@ -59,8 +59,8 @@ do_build() {
 }
 
 do_install() {
-	local _moddir="${DESTDIR}/usr/lib/modules/${_kernver}/extra/nvidia"
-	vmkdir usr/lib/modules/${_kernver}/extra/nvidia
+	local _moddir="${DESTDIR}/usr/lib/modules/${_kernver}/kernel/nvidia-580-open"
+	vmkdir usr/lib/modules/${_kernver}/kernel/nvidia-580-open
 
 	cd usr/src/nvidia-${version}
 	for mod in nvidia nvidia-modeset nvidia-drm nvidia-uvm nvidia-peermem; do
