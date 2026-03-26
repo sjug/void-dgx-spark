@@ -1,0 +1,17 @@
+# Template file for 'nv-cpu-governor'
+# Sets CPU frequency governor to 'performance' at boot
+pkgname=nv-cpu-governor
+version=22.05
+revision=1
+create_wrksrc=yes
+short_desc="Set CPU frequency governor to performance"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+archs="aarch64"
+depends="cpupower"
+
+do_install() {
+	# Runit oneshot service to set CPU governor at boot
+	vsv nv-cpu-governor
+}

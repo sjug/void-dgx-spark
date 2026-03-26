@@ -48,9 +48,15 @@ pre_configure() {
 }
 
 post_install() {
-	# Remove systemd, sysvinit, and systemctl-dependent udev rules
+	# Remove systemd, sysvinit, and systemd-dependent udev rules
+	# Module loading is handled by 09-rdma.sh core-service
+	# rdma-ndd runs as a runit service
 	rm -rf ${DESTDIR}/usr/lib/systemd ${DESTDIR}/etc/init.d
 	rm -f ${DESTDIR}/usr/lib/udev/rules.d/60-srp_daemon.rules
+	rm -f ${DESTDIR}/usr/lib/udev/rules.d/90-rdma-ulp-modules.rules
+	rm -f ${DESTDIR}/usr/lib/udev/rules.d/60-rdma-ndd.rules
+	rm -f ${DESTDIR}/usr/lib/udev/rules.d/90-rdma-umad.rules
+	rm -f ${DESTDIR}/usr/lib/udev/rules.d/90-iwpmd.rules
 
 	# Install dracut module for RDMA
 	vinstall kernel-boot/dracut/50rdma/module-setup.sh 755 \

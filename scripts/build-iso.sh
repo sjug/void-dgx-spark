@@ -69,11 +69,11 @@ EXTRA_PKGS="dgx-spark-config"
 EXTRA_PKGS+=" nvidia-dgx-spark-modules"
 EXTRA_PKGS+=" cryptsetup rpcbind nftables iptables-nft wireless-regdb"
 EXTRA_PKGS+=" ethtool rdma-core iperf3 perftest"
-EXTRA_PKGS+=" pciutils usbutils lshw btop"
+EXTRA_PKGS+=" pciutils usbutils lshw btop fwupd"
 EXTRA_PKGS+=" vim git curl tmux ncurses-term uv podman"
 
 # Services to enable
-SERVICES="sshd dhcpcd nvidia-persistenced"
+SERVICES="dbus sshd dhcpcd nvidia-persistenced"
 SERVICES+=" dgx-dashboard dgx-dashboard-admin"
 SERVICES+=" rdma-ndd"
 

@@ -2,7 +2,7 @@
 # Meta-package that pulls in all DGX Spark hardware support packages
 pkgname=dgx-spark-config
 version=1.0
-revision=2
+revision=3
 short_desc="NVIDIA DGX Spark system configuration (meta-package)"
 maintainer="Void DGX Spark <void-dgx-spark@example.com>"
 license="MIT"
@@ -33,7 +33,11 @@ depends="
  nvidia-mlnx-tools
  dgx-spark-mlnx-hotplug
  nvidia-spark-mlnx-firmware-manager
- mlnx-pxe-setup"
+ nvidia-mstflint-loader
+ nv-cpu-governor
+ nv-common-apis
+ nvidia-relaxed-ordering-nvme
+ fwupd"
 
 do_install() {
 	# Dracut configuration for initramfs (not covered by any Ubuntu package)
@@ -45,6 +49,9 @@ do_install() {
 	# Resource limits for RDMA and NVIDIA (nofile + memlock)
 	# From nv-limits 25.10-1 on DGX OS
 	vinstall ${FILESDIR}/nv-limits.conf 644 etc/security/limits.d
+
+	# Sysctl tuning
+	vinstall ${FILESDIR}/dgx-spark-sysctl.conf 644 usr/lib/sysctl.d
 
 	# RDMA module loading is handled by rdma-core's 09-rdma.sh core-service
 }

@@ -1,0 +1,16 @@
+# Template file for 'nvidia-mstflint-loader'
+# Loads mstflint-access kernel module at boot for mstflint tools
+pkgname=nvidia-mstflint-loader
+version=23.03
+revision=1
+create_wrksrc=yes
+short_desc="Load mstflint-access kernel module at boot"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+archs="aarch64"
+depends="mstflint"
+
+do_install() {
+	vinstall ${FILESDIR}/nvidia-mstflint.conf 644 usr/lib/modules-load.d
+}

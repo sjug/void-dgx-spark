@@ -1,0 +1,51 @@
+# Template file for 'nv-common-apis'
+# Platform detection scripts used by NVIDIA DGX tools
+pkgname=nv-common-apis
+version=26.01
+revision=1
+create_wrksrc=yes
+short_desc="NVIDIA DGX platform detection scripts"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+
+archs="aarch64"
+nostrip=yes
+
+hostmakedepends="tar xz zstd"
+
+_url="https://repo.download.nvidia.com/baseos/ubuntu/noble/arm64/pool/common/n/nv-common-apis"
+_deb="nv-common-apis_${version}-1_all.deb"
+_cksum="98363c5e318208297d8a1b7f4348d8a68ceb91d52a158bd13667e267a72edddc"
+
+do_fetch() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	mkdir -p "${_srcdir}"
+	if [ ! -f "${_srcdir}/${_deb}" ]; then
+		xbps-fetch -o "${_srcdir}/${_deb}" "${_url}/${_deb}"
+	fi
+	echo "${_cksum}  ${_srcdir}/${_deb}" | sha256sum -c
+}
+
+do_extract() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	ar x "${_srcdir}/${_deb}"
+	tar xf data.tar.*
+	rm -f control.tar.* data.tar.* debian-binary
+}
+
+do_install() {
+	# Platform detection scripts
+	if [ -d usr/local/sbin/nv_scripts ]; then
+		vmkdir usr/lib/nv_scripts
+		cp -a usr/local/sbin/nv_scripts/* ${DESTDIR}/usr/lib/nv_scripts/
+		chmod 755 ${DESTDIR}/usr/lib/nv_scripts/*.bash
+	fi
+
+	# Platform config
+	if [ -d etc/nvidia-platform.d ]; then
+		vmkdir etc/nvidia-platform.d
+		cp -a etc/nvidia-platform.d/* ${DESTDIR}/etc/nvidia-platform.d/
+	fi
+
+}

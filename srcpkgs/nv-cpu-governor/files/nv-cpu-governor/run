@@ -1,0 +1,5 @@
+#!/bin/sh
+# Set CPU frequency governor to performance for GPU workloads
+exec 2>&1
+cpupower frequency-set -g performance
+exec chpst -b nv-cpu-governor pause

@@ -1,0 +1,42 @@
+# Template file for 'nvidia-relaxed-ordering-nvme'
+# Enables PCIe Relaxed Ordering on NVMe drives for better performance
+pkgname=nvidia-relaxed-ordering-nvme
+version=25.07
+revision=1
+create_wrksrc=yes
+short_desc="PCIe Relaxed Ordering for NVMe drives on DGX Spark"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+
+archs="aarch64"
+nostrip=yes
+
+hostmakedepends="tar xz zstd"
+depends="nv-common-apis nvme-cli"
+
+_url="https://repo.download.nvidia.com/baseos/ubuntu/noble/arm64/pool/common/n/nvidia-relaxed-ordering"
+_deb="nvidia-relaxed-ordering-nvme_${version}-2_all.deb"
+_cksum="d88d5369f6c468a9e509eeb6df2c079f40bf73794f71a44dad3921402e2dab92"
+
+do_fetch() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	mkdir -p "${_srcdir}"
+	if [ ! -f "${_srcdir}/${_deb}" ]; then
+		xbps-fetch -o "${_srcdir}/${_deb}" "${_url}/${_deb}"
+	fi
+	echo "${_cksum}  ${_srcdir}/${_deb}" | sha256sum -c
+}
+
+do_extract() {
+	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"
+	ar x "${_srcdir}/${_deb}"
+	tar xf data.tar.*
+	rm -f control.tar.* data.tar.* debian-binary
+}
+
+do_install() {
+	if [ -f usr/bin/nvidia-relaxed-ordering-nvme.sh ]; then
+		vbin usr/bin/nvidia-relaxed-ordering-nvme.sh
+	fi
+}
