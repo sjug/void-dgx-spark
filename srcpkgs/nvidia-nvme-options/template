@@ -2,7 +2,7 @@
 # 1:1 with Ubuntu package of the same name
 # Configures NVMe interrupt coalescing for Samsung/Kioxia/Micron drives
 pkgname=nvidia-nvme-options
-version=25.12
+version=26.02
 revision=1
 short_desc="NVMe interrupt coalescing for DGX Spark"
 maintainer="Void DGX Spark <void-dgx-spark@example.com>"

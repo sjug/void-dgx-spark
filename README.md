@@ -17,8 +17,9 @@ project, applying lessons learned to Void Linux packaging.
 | `nvidia-dgx-spark` | NVIDIA 580.142 userspace (nvidia-smi, libs, persistenced, udev rules) |
 | `nvidia-dgx-spark-modules` | Pre-built NVIDIA 580.142 open kernel modules |
 | `nvidia-dgx-spark-firmware` | GPU firmware blobs (580.126.09 + 580.142) |
-| `dgx-spark-config` | Meta-package: pulls in all DGX Spark packages, installs sysctl/dracut/modprobe/limits config |
+| `dgx-spark-config` | Meta-package: pulls in all DGX Spark packages + lldpd, installs sysctl/dracut/modprobe/limits config |
 | `dgx-dashboard` | DGX Dashboard web interface with runit services |
+| `nvidia-conf-xconfig` | Auto-configures X for NVIDIA GPUs at boot (oneshot runit service) |
 
 ### Networking and RDMA
 
@@ -31,6 +32,7 @@ project, applying lessons learned to Void Linux packaging.
 | `dgx-spark-mlnx-hotplug` | ConnectX hotplug udev rules |
 | `nvidia-spark-mlnx-firmware-manager` | ConnectX firmware management |
 | `nvidia-mstflint-loader` | Loads mstflint-access kernel module at boot |
+| `mlnx-pxe-setup` | PXE boot configuration scripts for Mellanox NICs |
 
 ### Hardware tuning
 
@@ -47,7 +49,7 @@ project, applying lessons learned to Void Linux packaging.
 | `nvidia-disable-aqc-nic` | Blacklists Aquantia NIC driver |
 | `nvidia-disable-init-on-alloc` | Disables init_on_alloc for performance |
 | `nvidia-disable-numa-balancing` | Disables NUMA balancing for GPU workloads |
-| `nvidia-nvme-options` | NVMe module options |
+| `nvidia-nvme-options` | NVMe interrupt coalescing service (Samsung/Kioxia/Micron drives) |
 | `nvidia-earlycon` | Early console UART configuration |
 | `nvidia-spark-initcall-bl` | Tegra CBB initcall blacklist |
 | `nvidia-spark-grub-pci` | PCIe bus safety configuration |

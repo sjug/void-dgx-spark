@@ -1,0 +1,17 @@
+# Template file for 'nvidia-conf-xconfig'
+# Runs nvidia-xconfig before the display manager starts
+pkgname=nvidia-conf-xconfig
+version=26.02
+revision=1
+create_wrksrc=yes
+short_desc="Auto-configure X for NVIDIA GPUs on DGX Spark"
+maintainer="Void DGX Spark <void-dgx-spark@example.com>"
+license="custom:NVIDIA"
+homepage="https://www.nvidia.com/"
+archs="aarch64"
+depends="nv-common-apis nvidia-dgx-spark"
+
+do_install() {
+	vbin ${FILESDIR}/nvidia-conf-xconfig.sh
+	vsv nvidia-conf-xconfig
+}

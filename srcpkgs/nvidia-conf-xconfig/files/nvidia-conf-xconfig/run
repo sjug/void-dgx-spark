@@ -1,0 +1,5 @@
+#!/bin/sh
+# Run nvidia-xconfig once at boot, then pause (oneshot)
+exec 2>&1
+/usr/bin/nvidia-conf-xconfig.sh
+exec chpst -b nvidia-conf-xconfig pause

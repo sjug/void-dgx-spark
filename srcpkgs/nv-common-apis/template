@@ -1,7 +1,7 @@
 # Template file for 'nv-common-apis'
 # Platform detection scripts used by NVIDIA DGX tools
 pkgname=nv-common-apis
-version=26.01
+version=26.03
 revision=1
 create_wrksrc=yes
 short_desc="NVIDIA DGX platform detection scripts"
@@ -15,8 +15,8 @@ nostrip=yes
 hostmakedepends="tar xz zstd"
 
 _url="https://repo.download.nvidia.com/baseos/ubuntu/noble/arm64/pool/common/n/nv-common-apis"
-_deb="nv-common-apis_${version}-1_all.deb"
-_cksum="98363c5e318208297d8a1b7f4348d8a68ceb91d52a158bd13667e267a72edddc"
+_deb="nv-common-apis_${version}-2_all.deb"
+_cksum="8316c171332124b92ca61af9b7a8d68971e0769a34941bec1e8e2f717be6f2a6"
 
 do_fetch() {
 	local _srcdir="${XBPS_SRCDISTDIR}/${pkgname}-${version}"

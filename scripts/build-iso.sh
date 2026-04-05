@@ -76,6 +76,8 @@ EXTRA_PKGS+=" vim git curl tmux ncurses-term uv podman"
 SERVICES="dbus sshd dhcpcd nvidia-persistenced"
 SERVICES+=" dgx-dashboard dgx-dashboard-admin"
 SERVICES+=" rdma-ndd"
+SERVICES+=" lldpd"
+SERVICES+=" nvidia-conf-xconfig"
 
 echo ""
 echo "=== Building DGX Spark Void Linux ISO ==="
